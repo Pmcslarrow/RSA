@@ -12,6 +12,7 @@
 
 //Functions:
 
+
 uint64_t square_root(uint64_t n)
 {
     uint64_t root = 0;
@@ -49,7 +50,7 @@ uint64_t getPrime()
     srand((unsigned) time(&t));
 
 
-    uint64_t i = rand() % 25;
+    uint64_t i = rand() % 10000;
     while (1) {
         if (isPrime(i))
         {
@@ -62,7 +63,6 @@ uint64_t getPrime()
 
 uint64_t *getPrimes(){
     //malloc -- allocates memory location with a pointer to it
-    //This functon will store 'ret' there and store the two primes in the location
 	uint64_t *ret = (uint64_t *)malloc(sizeof(uint64_t));
 	ret[0]= getPrime();
 	return ret;
@@ -70,7 +70,7 @@ uint64_t *getPrimes(){
 
 uint64_t get_second_prime(uint64_t p)
 {
-    p = p + 5;
+    p++;
     while(1)
     {
         if (isPrime(p)){
@@ -103,9 +103,15 @@ uint64_t gcd(uint64_t a, uint64_t b)
 uint64_t coprime(uint64_t totient)
 {
     //iterates cand each loop through and checks to see coPrime
-    uint64_t cand = 2;
-    while(!(totient % ++cand)) { }
-    return cand;
+    uint64_t cand = 3;
+    for (uint64_t i = 3; i < totient; i++)
+    {
+        uint64_t common = gcd(i, totient);
+        if (common == 1)
+        {
+            return i;
+        }
+    }
 }
 
 //Takes an integer and uses my algorithm to turn it into a new integer value!
@@ -121,10 +127,10 @@ uint64_t string_to_int1(char* s)
 
 
 //Takes in an integer and returns a character array (string)
-char * int_to_string(int integer)
+char * int_to_string(uint64_t integer)
 {
     static char word_array[10];
-    int i = 0;
+    uint64_t i = 0;
     while (integer > 0)
     {
         char letter = (char) integer % 256;
@@ -138,10 +144,36 @@ char * int_to_string(int integer)
 } 
 
 
+
+//Modular Exponentiation from (https://www.geeksforgeeks.org/modular-exponentiation-power-in-modular-arithmetic/)
+uint64_t power(uint64_t x, uint64_t y, uint64_t p)
+{
+    uint64_t res = 1;     // Initialize result
+ 
+    x = x % p; // Update x if it is more than or
+                // equal to p
+  
+    if (x == 0) return 0; // In case x is divisible by p;
+ 
+    while (y > 0)
+    {
+        // If y is odd, multiply x with result
+        if (y & 1)
+            res = (res*x) % p;
+ 
+        // y must be even now
+        y = y>>1; // y = y/2
+        x = (x*x) % p;
+    }
+    return res;
+}
+
+
+
 uint64_t find_d(uint64_t coP, uint64_t totient)
 {
-    for (uint64_t i = 3; i <= totient; i++){
-        if (coP * i % totient == 1){
+    for (uint64_t i = 3; i < totient; i++){
+        if ((coP * i) % totient == 1){
             return i;
         }
     }
@@ -169,22 +201,13 @@ uint64_t ipow(uint64_t base, uint64_t exp)
 //c = m^e mod n
 uint64_t encrypt(uint64_t int_message, uint64_t coP, uint64_t n)
 {
-    uint64_t power = ipow(int_message, coP);
-    return power % n;    
+    return ipow(int_message, coP);
 }
 
 //m = c ^ d mod n
 uint64_t decrypt(uint64_t cipher, uint64_t d, uint64_t n)
 {
-    uint64_t message_int;
-
-    //Right here is where the issue occurs, cipher^d is way too large of an integer value, so it either is negative or 0
-    uint64_t power = ipow(cipher, d);
-    //If there is a way to fix how large the number ends up being, after going through the calculations with a 
-    //calculator I can see that the numbers should work perfectly, if only the integer value in power was correct...
-    printf("power:  %d\n", power);
-    message_int = power % n;
-    return message_int;
+    return power(cipher, d, n);
 }
 
 
@@ -203,7 +226,7 @@ void print_final(char* word)
 
 
 int main(){
-    uint64_t p, q, n, totient, coP, k, d, c, m, greatest_common_div, cipher, int_word, decrypt_messsage, string_as_int, z;
+    uint64_t p, q, n, totient, coP, k, d, c, m, greatest_common_div, cipher, int_as_string, decrypt_messsage, string_as_int, z, exp;
     //prime_location[0] holds an allocated pointer in memory wth unsigned 64 bit integer size.
     uint64_t *prime_location = getPrimes();
     p = prime_location[0];
@@ -211,7 +234,6 @@ int main(){
     n = p * q;
     totient = (p - 1) * (q - 1);
     coP = coprime(totient);
-    //greatest_common_div = gcd(p-1, q-1);
     d = find_d(coP, totient);
 
     //POST VARIABLE
@@ -225,12 +247,14 @@ int main(){
     printf("n:  %d\n", n);
     printf("totient:  %d\n", totient);
     printf("CoPrime:  %d\n", coP);
-    //printf("Greatest Common Divisor:  %d\n", greatest_common_div);
     printf("d:  %d\n", d);
     printf("String as an integer:  %d\n", string_as_int);
     printf("CIPHER:  %d\n", cipher);
     printf("DECIPHER:  %d\n", decrypt_messsage);
 
 
+
+    //You finally made it decipher. Now figure out how to change the number back into characters
+    int_as_string = int_to_string(decrypt_messsage);
 
 }
