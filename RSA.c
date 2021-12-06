@@ -1,4 +1,3 @@
-
 //RSA.c
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,11 +7,10 @@
 #include <stdint.h>
 #include <stdbool.h>
 #define PRIME_LEN 3
-//#define RAND_SEED 451
 
 //Functions:
 
-
+//My own square root function
 uint64_t square_root(uint64_t n)
 {
     uint64_t root = 0;
@@ -23,7 +21,7 @@ uint64_t square_root(uint64_t n)
 	return root;
 }
 
-//returns 1 if it is prime, returns 0 if it is not
+//Returns true if isPrime and false if not(isPrime)
 bool isPrime(uint64_t n)
 {
 
@@ -43,16 +41,15 @@ bool isPrime(uint64_t n)
     return true;
 }
 
-//returns the number that happens to be prime
+//Returns a prime number
 uint64_t getPrime()
 {
     time_t t;
     srand((unsigned) time(&t));
 
-
-    uint64_t i = rand() % 10000;
+    uint64_t i = rand() % 99999;
     while (1) {
-        if (isPrime(i))
+        if (isPrime(i) && i > 20000)
         {
             break;
         }
@@ -61,8 +58,8 @@ uint64_t getPrime()
     return i;
 }
 
+
 uint64_t *getPrimes(){
-    //malloc -- allocates memory location with a pointer to it
 	uint64_t *ret = (uint64_t *)malloc(sizeof(uint64_t));
 	ret[0]= getPrime();
 	return ret;
@@ -70,7 +67,7 @@ uint64_t *getPrimes(){
 
 uint64_t get_second_prime(uint64_t p)
 {
-    p++;
+    p += 4051;
     while(1)
     {
         if (isPrime(p)){
@@ -99,10 +96,8 @@ uint64_t gcd(uint64_t a, uint64_t b)
 
 }
 
-//Returns a coprime number greater than 2 and less than the totient whose gcd between itself and totient is 1. 
 uint64_t coprime(uint64_t totient)
 {
-    //iterates cand each loop through and checks to see coPrime
     uint64_t cand = 3;
     for (uint64_t i = 3; i < totient; i++)
     {
@@ -114,36 +109,32 @@ uint64_t coprime(uint64_t totient)
     }
 }
 
-//Takes an integer and uses my algorithm to turn it into a new integer value!
-uint64_t string_to_int1(char* s)
+uint64_t stoi(char *s)
 {
-    uint64_t i = 0, end=0;
-    while(s[i])
+    uint64_t i = 0, end = 0;
+    for ( int i = 0 ; s[i] ; i++ ) 
     {
-        end += (uint64_t)s[i++];
+        end = end * 256 + s[i];
     }
     return end;
 }
 
-
-//Takes in an integer and returns a character array (string)
-char * int_to_string(uint64_t integer)
+char *itos(uint64_t integer)
 {
-    static char word_array[10];
-    uint64_t i = 0;
-    while (integer > 0)
+    char str[8], i = 0, j = 0;
+    for (; integer > 0 && i < 8 ; i++)
     {
-        char letter = (char) integer % 256;
-        printf("character:  %c\n", letter);
-        word_array[i] = letter;
-        integer = integer / 256;
-        i++;
+        str[i] = integer % 256;
+        integer /= 256;
     }
-    
-    return word_array;
-} 
-
-
+    char *ret = (char *)malloc(sizeof(uint64_t));
+    i = strlen(str) - 1;
+    for ( ; i >= 0 ; i-- )
+    {
+        ret[j++] = str[i];
+    }
+    return ret;
+}
 
 //Modular Exponentiation from (https://www.geeksforgeeks.org/modular-exponentiation-power-in-modular-arithmetic/)
 uint64_t power(uint64_t x, uint64_t y, uint64_t p)
@@ -168,65 +159,34 @@ uint64_t power(uint64_t x, uint64_t y, uint64_t p)
     return res;
 }
 
-
-
 uint64_t find_d(uint64_t coP, uint64_t totient)
 {
-    for (uint64_t i = 3; i < totient; i++){
-        if ((coP * i) % totient == 1){
+    
+    for (uint64_t i = 2; i < totient; i++){
+        if (((coP * i) % totient) == 1){
             return i;
         }
     }
     return 0;
 }
 
-//I genuinely didn't trust using the pow() function that takes doubles, so I got this ipow from here:
-//https://stackoverflow.com/questions/101439/the-most-efficient-way-to-implement-an-integer-based-power-function-powint-int
-uint64_t ipow(uint64_t base, uint64_t exp)
-{
-    uint64_t result = 1;
-    for (;;)
-    {
-        if (exp & 1)
-            result *= base;
-        exp >>= 1;
-        if (!exp)
-            break;
-        base *= base;
-    }
-
-    return result;
-}
-
 //c = m^e mod n
 uint64_t encrypt(uint64_t int_message, uint64_t coP, uint64_t n)
 {
-    return ipow(int_message, coP);
+    return power(int_message, coP, n);
 }
 
 //m = c ^ d mod n
+//The algorithm is correct, but it does not turn it back into the int_as_string
 uint64_t decrypt(uint64_t cipher, uint64_t d, uint64_t n)
 {
     return power(cipher, d, n);
 }
 
 
-//Prints the final word after all the steps
-void print_final(char* word)
-{
-    printf("###################\n");
-    printf("PRINTING FINAL WORD:\n");
-    for (int i = sizeof(word) / sizeof(char); i >= 0; i--){
-            printf("%c", word[i]);
-            word[i] = word[i];
-        }
-    printf("###################\n");
-}
-
-
-
 int main(){
-    uint64_t p, q, n, totient, coP, k, d, c, m, greatest_common_div, cipher, int_as_string, decrypt_messsage, string_as_int, z, exp;
+    uint64_t p, q, n, totient, coP, k, d, d2, c, m, greatest_common_div, cipher, decrypt_messsage, int_message, z, exp;
+    char* int_as_string, *end;
     //prime_location[0] holds an allocated pointer in memory wth unsigned 64 bit integer size.
     uint64_t *prime_location = getPrimes();
     p = prime_location[0];
@@ -237,9 +197,10 @@ int main(){
     d = find_d(coP, totient);
 
     //POST VARIABLE
+    //THIS PROGRAM ONLY WILL WORK FOR STRINGS WITH 3 CHARACTERS
     char *str = "pau";
-    string_as_int = string_to_int1(str);
-    cipher = encrypt(string_as_int, coP, n);
+    int_message = stoi(str);
+    cipher = encrypt(int_message, coP, n);
     decrypt_messsage = decrypt(cipher, d, n);
 
     printf("p:  %d\n", p);
@@ -248,13 +209,11 @@ int main(){
     printf("totient:  %d\n", totient);
     printf("CoPrime:  %d\n", coP);
     printf("d:  %d\n", d);
-    printf("String as an integer:  %d\n", string_as_int);
+    printf("String as an integer:  %d\n", int_message);
     printf("CIPHER:  %d\n", cipher);
     printf("DECIPHER:  %d\n", decrypt_messsage);
 
-
-
-    //You finally made it decipher. Now figure out how to change the number back into characters
-    int_as_string = int_to_string(decrypt_messsage);
-
+    end = itos(decrypt_messsage);
+    printf("FINAL: %s", end);
+    return 0;
 }
