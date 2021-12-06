@@ -177,7 +177,6 @@ uint64_t encrypt(uint64_t int_message, uint64_t coP, uint64_t n)
 }
 
 //m = c ^ d mod n
-//The algorithm is correct, but it does not turn it back into the int_as_string
 uint64_t decrypt(uint64_t cipher, uint64_t d, uint64_t n)
 {
     return power(cipher, d, n);
